@@ -1,4 +1,4 @@
-import 'package:adoan/Guard/CameraScreen.dart';
+import 'package:adoan/Guard/Face/FaceRegistrationScreen.dart';
 import 'package:flutter/material.dart';
 
 class CheckInPage extends StatelessWidget {
@@ -14,22 +14,16 @@ class CheckInPage extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-
-        // 🔙 Nút Back
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1E293B)),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
-
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 12),
             child: Icon(Icons.notifications, color: Color(0xFF1E293B)),
           ),
         ],
-
         title: const Text(
           "Chấm công",
           style: TextStyle(
@@ -61,22 +55,13 @@ class CheckInPage extends StatelessWidget {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Ping Effect
-                        Stack(
-                          children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: const BoxDecoration(
-                                color: Colors.orange,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
+                      children: const [
+                        CircleAvatar(
+                          radius: 5,
+                          backgroundColor: Colors.orange,
                         ),
-                        const SizedBox(width: 8),
-                        const Text(
+                        SizedBox(width: 8),
+                        Text(
                           "Bạn đang ngoài ca trực",
                           style: TextStyle(
                             color: Color(0xFFF97316),
@@ -90,7 +75,7 @@ class CheckInPage extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // 🕒 Giờ - Ngày
+                  // 🕒 Thời gian
                   const Text(
                     "10:30",
                     style: TextStyle(
@@ -109,6 +94,7 @@ class CheckInPage extends StatelessWidget {
                   // 🗺 Bản đồ
                   Container(
                     height: 200,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.grey.shade300),
@@ -123,13 +109,13 @@ class CheckInPage extends StatelessWidget {
 
                   const SizedBox(height: 8),
                   const Text(
-                    "904 le van viet",
+                    "904 Lê Văn Việt",
                     style: TextStyle(color: Color(0xFF1E293B), fontSize: 16),
                   ),
 
                   const SizedBox(height: 24),
 
-                  // 📌 Thông tin ca làm việc
+                  // 📌 Thông tin ca
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.all(16),
@@ -137,12 +123,6 @@ class CheckInPage extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.grey.shade300),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12.withOpacity(0.05),
-                          blurRadius: 4,
-                        ),
-                      ],
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -163,7 +143,6 @@ class CheckInPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF1E293B),
                               ),
                             ),
                           ],
@@ -184,7 +163,6 @@ class CheckInPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF1E293B),
                               ),
                             ),
                           ],
@@ -195,50 +173,64 @@ class CheckInPage extends StatelessWidget {
 
                   const SizedBox(height: 28),
 
-                  // 🔵 Nút quét mặt
-                  Container(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CameraScreen(),
+                  // 🔵 Nút quét khuôn mặt
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FaceRegistrationScreen(),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      children: const [
+                        CircleAvatar(
+                          radius: 65,
+                          backgroundColor: Color(0xFF2563EB),
+                          child: Icon(
+                            Icons.face_retouching_natural,
+                            color: Colors.white,
+                            size: 70,
                           ),
-                        );
-                      },
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 65,
-                            backgroundColor: Color(0xFF2563EB),
-                            child: Icon(
-                              Icons.face_retouching_natural,
-                              color: Colors.white,
-                              size: 70,
-                            ),
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          "Quét khuôn mặt để vào ca",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1E293B),
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            "Quét khuôn mặt để vào ca",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            "Căn chỉnh khuôn mặt vào trong khung",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // 🔗 Đăng ký khuôn mặt
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FaceRegistrationScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Đăng ký khuôn mặt",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF2563EB),
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -249,9 +241,9 @@ class CheckInPage extends StatelessWidget {
       // ---------------------- BOTTOM NAV ----------------------
       bottomNavigationBar: Container(
         height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          border: const Border(top: BorderSide(color: Colors.grey)),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -271,6 +263,7 @@ class CheckInPage extends StatelessWidget {
   }
 }
 
+// ---------------------- BOTTOM ITEM ----------------------
 class _BottomNavItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -289,7 +282,7 @@ class _BottomNavItem extends StatelessWidget {
       children: [
         Icon(
           icon,
-          color: isActive ? Color(0xFF2563EB) : Color(0xFF64748B),
+          color: isActive ? const Color(0xFF2563EB) : const Color(0xFF64748B),
           size: 26,
         ),
         const SizedBox(height: 4),
@@ -298,7 +291,7 @@ class _BottomNavItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: isActive ? Color(0xFF2563EB) : Color(0xFF64748B),
+            color: isActive ? const Color(0xFF2563EB) : const Color(0xFF64748B),
           ),
         ),
       ],

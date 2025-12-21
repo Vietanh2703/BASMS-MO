@@ -1,124 +1,229 @@
-import 'dart:async';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
+import '../models/shift_model.dart';
 
-class LocationService extends StatefulWidget {
-  const LocationService({super.key});
+class LocationPage extends StatefulWidget {
+  final ShiftModel shift;
+
+  const LocationPage({super.key, required this.shift});
 
   @override
-  State<LocationService> createState() => _LocationServiceState();
+  State<LocationPage> createState() => _LocationPageState();
 }
 
-class _LocationServiceState extends State<LocationService> {
-  Completer<GoogleMapController> _controller = Completer();
-  StreamSubscription<Position>? _positionStream;
-  LatLng? _currentPosition;
-  Marker? _marker;
+class _LocationPageState extends State<LocationPage> {
+  final MapController _mapController = MapController();
+
+  LatLng? currentPosition;
+  List<LatLng> routePoints = [];
+  bool loadingRoute = false;
 
   @override
   void initState() {
     super.initState();
-    _checkPermissionAndStartTracking();
+    _getCurrentLocation();
   }
 
-  Future<void> _checkPermissionAndStartTracking() async {
+  /// 📍 Lấy vị trí hiện tại
+  Future<void> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      return;
-    }
+    if (!serviceEnabled) return;
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
     }
-
     if (permission == LocationPermission.deniedForever) return;
 
-    // 🟢 LẤY VỊ TRÍ HIỆN TẠI NGAY KHI APP MỞ
-    final pos = await Geolocator.getCurrentPosition();
-    setState(() {
-      _currentPosition = LatLng(pos.latitude, pos.longitude);
-      _marker = Marker(
-        markerId: const MarkerId("me"),
-        position: _currentPosition!,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        infoWindow: const InfoWindow(title: "Vị trí của tôi"),
-      );
-    });
-
-    // 🔁 LẮNG NGHE CẬP NHẬT VỊ TRÍ THEO THỜI GIAN
-    _positionStream = Geolocator.getPositionStream(
+    final position = await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.best,
-        distanceFilter: 5,
+        accuracy: LocationAccuracy.high,
       ),
-    ).listen((Position position) async {
-      LatLng newPos = LatLng(position.latitude, position.longitude);
-      setState(() {
-        _currentPosition = newPos;
-        _marker = Marker(
-          markerId: const MarkerId("me"),
-          position: newPos,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueAzure,
-          ),
-          infoWindow: const InfoWindow(title: "Vị trí của tôi"),
-        );
-      });
+    );
 
-      final GoogleMapController controller = await _controller.future;
-      controller.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: newPos, zoom: 17),
-        ),
-      );
+    setState(() {
+      currentPosition =
+          LatLng(position.latitude, position.longitude);
     });
+
+    _mapController.move(currentPosition!, 16);
   }
 
-  @override
-  void dispose() {
-    _positionStream?.cancel();
-    super.dispose();
+  /// 🧭 LẤY ĐƯỜNG ĐI THẬT TỪ OSRM
+  Future<void> _fetchRouteOSRM() async {
+    if (currentPosition == null) return;
+
+    setState(() => loadingRoute = true);
+
+    final startLng = currentPosition!.longitude;
+    final startLat = currentPosition!.latitude;
+    final endLng = widget.shift.longitude;
+    final endLat = widget.shift.latitude;
+
+    final url =
+        "https://router.project-osrm.org/route/v1/driving/"
+        "$startLng,$startLat;$endLng,$endLat"
+        "?overview=full&geometries=geojson";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      final data = json.decode(response.body);
+
+      final coords =
+      data['routes'][0]['geometry']['coordinates'] as List;
+
+      final points = coords
+          .map((c) => LatLng(c[1], c[0]))
+          .toList();
+
+      setState(() {
+        routePoints = points;
+        loadingRoute = false;
+      });
+
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: LatLngBounds.fromPoints(points),
+          padding: const EdgeInsets.all(60),
+        ),
+      );
+    } catch (e) {
+      setState(() => loadingRoute = false);
+      debugPrint("❌ Lỗi lấy route: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final LatLng shiftPosition =
+    LatLng(widget.shift.latitude, widget.shift.longitude);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Live Tracking"),
-        backgroundColor: const Color(0xFF2375D3),
+        title: const Text("Đường đi ca trực"),
       ),
-      body:
-          _currentPosition == null
-              ? const Center(child: CircularProgressIndicator())
-              : GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: _currentPosition!,
-                  zoom: 16,
-                ),
-                markers: _marker != null ? {_marker!} : {},
-                myLocationEnabled: true,
-                myLocationButtonEnabled: true,
-                onMapCreated: (GoogleMapController controller) {
-                  _controller.complete(controller);
-                },
-              ),
+      body: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: shiftPosition,
+          initialZoom: 16,
+        ),
+        children: [
+          /// 🌍 MAP
+          TileLayer(
+            urlTemplate:
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.example.adoan',
+          ),
 
-      // 🟢 FloatingActionButton — thêm ở đây
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF2375D3),
-        onPressed: () async {
-          final pos = await Geolocator.getCurrentPosition();
-          final GoogleMapController controller = await _controller.future;
-          controller.animateCamera(
-            CameraUpdate.newLatLng(LatLng(pos.latitude, pos.longitude)),
-          );
-        },
-        child: const Icon(Icons.my_location, color: Colors.white),
+          /// 🟢 VÒNG TRÒN 50M
+          CircleLayer(
+            circles: [
+              CircleMarker(
+                point: shiftPosition,
+                radius: 50,
+                useRadiusInMeter: true,
+                color: Colors.green.withOpacity(0.25),
+                borderStrokeWidth: 2,
+                borderColor: Colors.green,
+              ),
+              if (currentPosition != null)
+                CircleMarker(
+                  point: currentPosition!,
+                  radius: 50,
+                  useRadiusInMeter: true,
+                  color: Colors.blue.withOpacity(0.25),
+                  borderStrokeWidth: 2,
+                  borderColor: Colors.blue,
+                ),
+            ],
+          ),
+
+          /// 📍 MARKER
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: shiftPosition,
+                width: 50,
+                height: 50,
+                child: const Icon(
+                  Icons.location_pin,
+                  size: 45,
+                  color: Colors.red,
+                ),
+              ),
+              if (currentPosition != null)
+                Marker(
+                  point: currentPosition!,
+                  width: 50,
+                  height: 50,
+                  child: const Icon(
+                    Icons.my_location,
+                    size: 40,
+                    color: Colors.blue,
+                  ),
+                ),
+            ],
+          ),
+
+          /// 🧭 ĐƯỜNG ĐI THẬT
+          if (routePoints.isNotEmpty)
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: routePoints,
+                  strokeWidth: 5,
+                  color: Colors.blue,
+                ),
+              ],
+            ),
+        ],
+      ),
+
+      /// 🧾 INFO + NÚT VẼ ĐƯỜNG
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        color: Colors.white,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: loadingRoute ? null : _fetchRouteOSRM,
+              child: Text(
+                widget.shift.locationName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.shift.locationAddress,
+              style: const TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            if (loadingRoute)
+              const Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Text("Đang tính đường đi..."),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }

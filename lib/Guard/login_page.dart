@@ -49,6 +49,7 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString("token", token);
         await prefs.setString("userId", userId);
         await prefs.setString("roleId", roleId);
+        await prefs.setString("email", phoneController.text.trim());
 
         if (roleId == "ddbd6230-ba6e-11f0-bcac-00155dca8f48") {
           // 👉 ROLE GUARD
@@ -140,15 +141,17 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: phoneController,
-                    keyboardType: TextInputType.phone,
+                    keyboardType: TextInputType.emailAddress, // ✅ ĐÚNG
+                    textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    enableSuggestions: false,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      prefixIcon: const Icon(Icons.phone),
+                      prefixIcon: const Icon(Icons.email), // đổi icon cho đúng
                       hintText: "nhập email của bạn",
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: const BorderSide(color: Colors.grey),
@@ -231,19 +234,18 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child:
-                      isLoading
-                          ? const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          )
-                          : const Text(
-                            "Đăng nhập",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        )
+                      : const Text(
+                          "Đăng nhập",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
+                        ),
                 ),
               ),
             ],

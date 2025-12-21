@@ -4,6 +4,7 @@ import 'package:adoan/Guard/SettingsPage.dart';
 import 'package:adoan/Guard/WorkOverviewPage.dart';
 import 'package:adoan/Guard/checkin_page.dart';
 import 'package:adoan/Guard/incident_report_page.dart';
+import 'package:adoan/Guard/location_service.dart';
 import 'package:adoan/Guard/notification_page.dart';
 import 'package:adoan/Guard/profile_page.dart';
 import 'package:flutter/material.dart';
@@ -265,6 +266,7 @@ class HomePage extends StatelessWidget {
                         MaterialPageRoute(builder: (_) => const ProfilePage()),
                       ),
                     ),
+
                   ],
                 ),
               ],
