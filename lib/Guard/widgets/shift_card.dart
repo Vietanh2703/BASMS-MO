@@ -1,4 +1,5 @@
 import 'package:adoan/Guard/CheckInCameraPage.dart';
+import 'package:adoan/Guard/CheckOutCameraPage.dart';
 import 'package:adoan/Guard/location_service.dart';
 import 'package:adoan/models/shift_model.dart';
 import 'package:flutter/material.dart';
@@ -97,7 +98,7 @@ class ShiftCard extends StatelessWidget {
           /// NÚT CHỨC NĂNG
           Row(
             children: [
-              /// ĐIỂM DANH
+              /// CHECK-IN
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
@@ -108,18 +109,21 @@ class ShiftCard extends StatelessWidget {
                       ),
                     );
                   },
-
-                  icon: const Icon(Icons.qr_code),
-                  label: const Text("Điểm danh"),
+                  icon: const Icon(Icons.qr_code, size: 18),
+                  label: const Text(
+                    "Điểm danh",
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
 
-              /// VỊ TRÍ
+              const SizedBox(width: 8),
+
               /// VỊ TRÍ
               Expanded(
                 child: OutlinedButton.icon(
@@ -131,20 +135,48 @@ class ShiftCard extends StatelessWidget {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.map),
-                  label: const Text("Vị trí"),
+                  icon: const Icon(Icons.map, size: 18),
+                  label: const Text(
+                    "Vị trí",
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.blue, // màu icon + text
-                    side: const BorderSide(
-                      color: Colors.blue, // màu viền
-                      width: 1.5,
-                    ),
-                    backgroundColor: Colors.blue.shade50, // nền xanh nhạt (tuỳ chọn)
+                    foregroundColor: Colors.blue,
+                    side: const BorderSide(color: Colors.blue, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    backgroundColor: Colors.blue.shade50,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              /// CHECK-OUT
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CheckOutCameraPage(shift: shift),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.logout, size: 18),
+                  label: const Text(
+                    "Check out",
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
             ],
           ),
+
         ],
       ),
     );

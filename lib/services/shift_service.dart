@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/shift_model.dart';
@@ -7,15 +7,17 @@ import '../models/shift_model.dart';
 class ShiftService {
   static const String baseUrl = "https://api.anninhsinhtrac.com/api";
 
-  /// 1️⃣ Lấy guardId bằng email
+  /// 1️⃣ Lấy guardId bằng email đã login
   static Future<String> getGuardIdByEmail() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("token");
-    final email = prefs.getString("email"); // hoặc hardcode test
+    final email = prefs.getString("email");
 
-    if (token == null) {
-      throw Exception("Token null – chưa login");
+    if (token == null || email == null) {
+      throw Exception("❌ Chưa login hoặc thiếu email");
     }
+
+    debugPrint("📧 EMAIL SEND API: $email");
 
     final response = await http.post(
       Uri.parse("$baseUrl/shifts/guards/by-email"),
@@ -24,7 +26,7 @@ class ShiftService {
         "Content-Type": "application/json",
       },
       body: jsonEncode({
-        "Email": email ?? "guard8@basms.com", // test trước
+        "Email": email,
       }),
     );
 
@@ -33,19 +35,18 @@ class ShiftService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        "Lỗi lấy guardId: ${response.statusCode} - ${response.body}",
+        "❌ Lỗi lấy guardId: ${response.statusCode}",
       );
     }
 
     final data = jsonDecode(response.body);
-
-    /// ⚠️ RẤT QUAN TRỌNG: đúng key như Postman
     return data["guard"]["id"];
   }
 
+  /// 2️⃣ Lấy lịch trực (TỰ ĐỘNG LẤY guardId)
+  static Future<List<ShiftModel>> getAssignedShifts() async {
+    final guardId = await getGuardIdByEmail();
 
-  /// 2️⃣ Lấy lịch trực theo guardId
-  static Future<List<ShiftModel>> getAssignedShifts(String guardId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("token");
 
@@ -61,21 +62,16 @@ class ShiftService {
     debugPrint("📦 BODY: ${response.body}");
 
     if (response.statusCode != 200) {
-      throw Exception(
-        "Lỗi lấy lịch trực: ${response.statusCode} - ${response.body}",
-      );
+      throw Exception("❌ Lỗi lấy lịch trực");
     }
 
     final data = jsonDecode(response.body);
 
     if (data["success"] != true) {
-      throw Exception("API trả success=false");
+      throw Exception("❌ API success=false");
     }
 
     final List list = data["data"];
-
     return list.map((e) => ShiftModel.fromJson(e)).toList();
   }
-
-
 }

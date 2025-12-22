@@ -24,7 +24,7 @@ class _SchedulePageState extends State<SchedulePage> {
 
   Future<List<ShiftModel>> loadShifts() async {
     final guardId = await ShiftService.getGuardIdByEmail();
-    return ShiftService.getAssignedShifts(guardId);
+    return ShiftService.getAssignedShifts();
   }
 
   Future<void> pickDate() async {
